@@ -2,7 +2,7 @@
 include ('dumper.php');
 
 try {
-	$world_dumper = new Shuttle_Dumper(array(
+	$world_dumper = Shuttle_Dumper::create(array(
 		'host' => '',
 		'username' => 'root',
 		'password' => '',
@@ -15,7 +15,7 @@ try {
 	// dump the database to plain text file
 	$world_dumper->dump('world.sql');
 
-	$wp_dumper = new Shuttle_Dumper(array(
+	$wp_dumper = Shuttle_Dumper::create(array(
 		'host' => '',
 		'username' => 'root',
 		'password' => '',
@@ -25,7 +25,7 @@ try {
 	// Dump only the tables with wp_ prefix
 	$wp_dumper->dump('wordpress.sql', 'wp_');
 	
-	$countries_dumper = new Shuttle_Dumper(array(
+	$countries_dumper = Shuttle_Dumper::create(array(
 		'host' => '',
 		'username' => 'root',
 		'password' => '',
@@ -34,7 +34,7 @@ try {
 	));
 	$countries_dumper->dump('world.sql.gz');
 
-	$world_dumper = new Shuttle_Dumper(array(
+	$world_dumper = Shuttle_Dumper::create(array(
 		'host' => '',
 		'username' => 'root',
 		'password' => '',

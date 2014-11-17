@@ -1,7 +1,9 @@
 PHP based mysql dump library
 =========
 
-This is small utlity for making backups of MySQL tables. It works with `mysqli` php extension by default, and fallbacks to old-fashined `mysql` extension whenever `mysqli` is not available.
+The library will try to take the dump file through mysqldump shell utility, and if that's not available, it will take the dump through native PHP code. 
+
+It works with `mysqli` php extension by default, and fallbacks to old-fashined `mysql` extension whenever `mysqli` is not available.
 
 Features:
 
@@ -11,14 +13,13 @@ Features:
 ToDo:
  
  * add support for views and triggers
- * do some tests with importing foreign keys
-
+ * do some tests with importing foreign keys for native exports
 
 ## Examples
 
 Dump all tables in `world` database:
 
-    $world_dumper = new Shuttle_Dumper(array(
+    $world_dumper = Shuttle_Dumper::create(array(
         'host' => '',
         'username' => 'root',
         'password' => '',
@@ -32,7 +33,7 @@ Dump all tables in `world` database:
     
 Dump only the tables with `wp_` prefix:
 
-    $wp_dumper = new Shuttle_Dumper(array(
+    $wp_dumper = Shuttle_Dumper::create(array(
         'host' => '',
         'username' => 'root',
         'password' => '',
@@ -42,7 +43,7 @@ Dump only the tables with `wp_` prefix:
 
 Dump only `country` and `city` tables:
     
-    $countries_dumper = new Shuttle_Dumper(array(
+    $countries_dumper = Shuttle_Dumper::create(array(
         'host' => '',
         'username' => 'root',
         'password' => '',
@@ -53,7 +54,7 @@ Dump only `country` and `city` tables:
 
 Dump all tables except for `city`:
 
-    $world_dumper = new Shuttle_Dumper(array(
+    $world_dumper = Shuttle_Dumper::create(array(
         'host' => '',
         'username' => 'root',
         'password' => '',

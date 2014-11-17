@@ -8,7 +8,7 @@ abstract class Shuttle_Dump_File {
 	abstract function end();
 
 	static function create($filename) {
-		if (preg_match('~gz$~i', $filename)) {
+		if (self::is_gzip($filename)) {
 			return new Shuttle_Dump_File_Gzip($filename);
 		}
 		return new Shuttle_Dump_File_Plaintext($filename);
@@ -21,6 +21,10 @@ abstract class Shuttle_Dump_File {
 			throw new Shuttle_Exception("Couldn't create gz file");
 		}
 	}
+
+	public static function is_gzip($filename) {
+		return preg_match('~gz$~i', $filename);
+	}	
 }
 
 class Shuttle_Dump_File_Plaintext extends Shuttle_Dump_File {
@@ -75,7 +79,7 @@ class Shuttle_Insert_Statement {
 		return $this->length;
 	}
 }
-class Shuttle_Dumper {
+abstract class Shuttle_Dumper {
 	/**
 	 * Maximum length of single insert statement
 	 */
@@ -88,35 +92,124 @@ class Shuttle_Dumper {
 	public $include_tables;
 	public $exclude_tables = array();
 
-	function __construct($db_options) {
-		if ($db_options instanceof Shuttle_Database) {
-			$this->db = $db_options;
+	static function create($db_options) {
+		$db = Shuttle_DBConn::create($db_options);
+
+		$db->connect();
+
+		if (false && self::has_shell_access() 
+				&& self::is_shell_command_available('mysqldump')
+				&& self::is_shell_command_available('gzip')
+			) {
+			$dumper = new Shuttle_Dumper_ShellCommand($db);
 		} else {
-			$this->db = Shuttle_Database::create($db_options);
+			$dumper = new Shuttle_Dumper_Native($db);
 		}
 
 		if (isset($db_options['include_tables'])) {
-			$this->include_tables = $db_options['include_tables'];
+			$dumper->include_tables = $db_options['include_tables'];
+		}
+		if (isset($db_options['exclude_tables'])) {
+			$dumper->exclude_tables = $db_options['exclude_tables'];
 		}
 
-		if (isset($db_options['exclude_tables'])) {
-			$this->exclude_tables = $db_options['exclude_tables'];
+		return $dumper;
+	}
+
+	function __construct(Shuttle_DBConn $db) {
+		$this->db = $db;
+	}
+
+	public static function has_shell_access() {
+		return is_callable('shell_exec') && stripos(ini_get('disable_functions'), 'shell_exec') === false;
+	}
+
+	public static function is_shell_command_available($command) {
+		if (preg_match('~win~i', PHP_OS)) {
+			$binary_locator = 'where';
+		} else {
+			$binary_locator = 'which';
 		}
+
+		$binary_location = $binary_locator . ' ' . $command;
+
+		return !empty($binary_location);
 	}
 
 	/**
 	 * Create an export file from the tables with that prefix.
-	 * @param string $export_file_location the file to put the dump to. Note that whenever the file has .gz extension the dump will be created with gzip archiving
+	 * @param string $export_file_location the file to put the dump to.
+	 *		Note that whenever the file has .gz extension the dump will be comporessed with gzip
 	 * @param string $table_prefix Allow to export only tables with particular prefix
 	 * @return void
 	 */
+	abstract public function dump($export_file_location, $table_prefix='');
+
+	protected function get_tables($table_prefix) {
+		if (!empty($this->include_tables)) {
+			return $this->include_tables;
+		}
+
+		$tables = $this->db->fetch_numeric('
+			SHOW TABLES LIKE "' . $this->db->escape_like($table_prefix) . '%"
+		');
+
+		$tables_list = array();
+		foreach ($tables as $table_row) {
+			$table_name = $table_row[0];
+			if (!in_array($table_name, $this->exclude_tables)) {
+				$tables_list[] = $table_name;
+			}
+		}
+		return $tables_list;
+	}
+}
+
+class Shuttle_Dumper_ShellCommand extends Shuttle_Dumper {
 	function dump($export_file_location, $table_prefix='') {
+		$command = 'mysqldump -h ' . escapeshellarg($this->db->host) .
+			' -u ' . escapeshellarg($this->db->username) . 
+			' --password=' . escapeshellarg($this->db->password) . 
+			' ' . escapeshellarg($this->db->name);
+
+		$include_all_tables = empty($table_prefix) &&
+			empty($this->include_tables) &&
+			empty($this->exclude_tables);
+
+		if (!$include_all_tables) {
+			$tables = $this->get_tables($table_prefix);
+			$command .= ' ' . implode(' ', array_map('escapeshellarg', $tables));
+		}
+
+		$error_file = tempnam(sys_get_temp_dir(), 'err');
+
+		$command .= ' 2> ' . escapeshellarg($error_file);
+
+		if (Shuttle_Dump_File::is_gzip($export_file_location)) {
+			$command .= ' | gzip';
+		}
+
+		$command .= ' > ' . escapeshellarg($export_file_location);
+
+		exec($command, $output, $return_val);
+
+		if ($return_val !== 0) {
+			$error_text = file_get_contents($error_file);
+			throw new Shuttle_Exception('Couldn\'t export database: ' . $error_text);
+		}
+
+		unlink($error_file);
+	}
+}
+
+class Shuttle_Dumper_Native extends Shuttle_Dumper {
+	public function dump($export_file_location, $table_prefix='') {
 		$eol = $this->eol;
 
 		$this->dump_file = Shuttle_Dump_File::create($export_file_location);
 
 		$this->dump_file->write("-- Generation time: " . date('r') . $eol);
-		$this->dump_file->write("-- Host: " . $this->db->host . ", Database name: " . $this->db->name . $eol);
+		$this->dump_file->write("-- Host: " . $this->db->host . ", DB name: " . $this->db->name . $eol);
 		$this->dump_file->write("/*!40030 SET NAMES UTF8 */;$eol$eol");
 
 		$tables = $this->get_tables($table_prefix);
@@ -127,7 +220,7 @@ class Shuttle_Dumper {
 		unset($this->dump_file);
 	}
 
-	function dump_table($table) {
+	protected function dump_table($table) {
 		$eol = $this->eol;
 
 		$this->dump_file->write("DROP TABLE IF EXISTS `$table`;$eol");
@@ -160,33 +253,14 @@ class Shuttle_Dumper {
 		}
 		$this->dump_file->write($eol . $eol);
 	}
-
-	private function get_tables($table_prefix) {
-		if (!empty($this->include_tables)) {
-			return $this->include_tables;
-		}
-
-		$tables = $this->db->fetch_numeric('
-			SHOW TABLES LIKE "' . $this->db->escape_like($table_prefix) . '%"
-		');
-
-		$tables_list = array();
-		foreach ($tables as $table_row) {
-			$table_name = $table_row[0];
-			if (!in_array($table_name, $this->exclude_tables)) {
-				$tables_list[] = $table_name;
-			}
-		}
-		return $tables_list;
-	}
-
+	
 	public function get_create_table_sql($table) {
 		$create_table_sql = $this->db->fetch('SHOW CREATE TABLE `' . $table . '`');
 		return $create_table_sql[0]['Create Table'] . ';';
 	}
 }
 
-class Shuttle_Database {
+class Shuttle_DBConn {
 	public $host;
 	public $username;
 	public $password;
@@ -206,16 +280,16 @@ class Shuttle_Database {
 
 	static function create($options) {
 		if (class_exists('mysqli')) {
-			$class_name = "Shuttle_Database_Mysqli";
+			$class_name = "Shuttle_DBConn_Mysqli";
 		} else {
-			$class_name = "Shuttle_Database_Mysql";
+			$class_name = "Shuttle_DBConn_Mysql";
 		}
 
 		return new $class_name($options);
 	}
 }
 
-class Shuttle_Database_Mysql extends Shuttle_Database {
+class Shuttle_DBConn_Mysql extends Shuttle_DBConn {
 	function connect() {
 		$this->connection = @mysql_connect($this->host, $this->username, $this->password);
 		if (!$this->connection) {
@@ -277,7 +351,7 @@ class Shuttle_Database_Mysql extends Shuttle_Database {
 }
 
 
-class Shuttle_Database_Mysqli extends Shuttle_Database {
+class Shuttle_DBConn_Mysqli extends Shuttle_DBConn {
 	function connect() {
 		$this->connection = @new MySQLi($this->host, $this->username, $this->password, $this->name);
 
@@ -337,7 +411,7 @@ class Shuttle_Database_Mysqli extends Shuttle_Database {
 }
 
 
-class Shuttle_Database_PDO_MySQL extends Shuttle_Database {
+class Shuttle_DBConn_PDO_MySQL extends Shuttle_DBConn {
 	function connect() {
 		$this->connection = @new MySQLi($this->host, $this->username, $this->password, $this->name);
 
