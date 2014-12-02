@@ -97,7 +97,7 @@ abstract class Shuttle_Dumper {
 
 		$db->connect();
 
-		if (false && self::has_shell_access() 
+		if (self::has_shell_access() 
 				&& self::is_shell_command_available('mysqldump')
 				&& self::is_shell_command_available('gzip')
 			) {
