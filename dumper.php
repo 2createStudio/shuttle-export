@@ -195,6 +195,7 @@ class Shuttle_Dumper_ShellCommand extends Shuttle_Dumper {
 
 		if ($return_val !== 0) {
 			$error_text = file_get_contents($error_file);
+			unlink($error_file);
 			throw new Shuttle_Exception('Couldn\'t export database: ' . $error_text);
 		}
 
