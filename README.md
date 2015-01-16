@@ -1,19 +1,24 @@
-PHP based mysql dump library
+PHP based MySQL dump library
 =========
 
-The library will try to take the dump file through mysqldump shell utility, and if that's not available, it will take the dump through native PHP code. 
+The library provides easy way to create MySQL dumps files. It will try to create dump through:
 
-It works with `mysqli` php extension by default, and fallbacks to old-fashined `mysql` extension whenever `mysqli` is not available.
+ 0. `mysqldump` shell utility
+ 1. native PHP code
+
+For native dumps(on hosts without shell access), it works with `mysqli` php extension by default, and fallbacks to old-fashioned `mysql` whenever `mysqli` isn't available.
+
+The aim of the library is to work on as many web-hosts as possible: it requires PHP 5.2 and requires just one `mysql` or `mysqli` libraries to be available. 
 
 Features:
 
- * support for plain text and gzip output
- * support for including just particular tables from the database, excluding tables, and dumping tables with prefix
+ * support for plain text and gzip output(whenever the dump file has .gz extension, a gzip archive will be produced)
+ * support for including just particular tables from the database, excluding tables, and dumping just tables with particular prefix
 
 ToDo:
  
  * add support for views and triggers
- * do some tests with importing foreign keys for native exports
+ * try how things work with databases with foreign keys constraints
 
 ## Examples
 
