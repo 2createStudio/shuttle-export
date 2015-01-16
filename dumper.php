@@ -1,7 +1,17 @@
 <?php 
-
+/**
+ * Abstract dump file: provides common interface for writing
+ * data to dump files. 
+ */
 abstract class Shuttle_Dump_File {
+	/**
+	 * File Handle
+	 */
 	protected $fh;
+
+	/**
+	 * Location of the dump file on the disk
+	 */
 	protected $file_location;
 
 	abstract function write($string);
@@ -27,6 +37,9 @@ abstract class Shuttle_Dump_File {
 	}	
 }
 
+/**
+ * Plain text implementation. Uses standard file functions in PHP. 
+ */
 class Shuttle_Dump_File_Plaintext extends Shuttle_Dump_File {
 	function open() {
 		return fopen($this->file_location, 'w');
@@ -38,6 +51,10 @@ class Shuttle_Dump_File_Plaintext extends Shuttle_Dump_File {
 		return fclose($this->fh);
 	}
 }
+
+/**
+ * Gzip implementation. Uses gz* functions. 
+ */
 class Shuttle_Dump_File_Gzip extends Shuttle_Dump_File {
 	function open() {
 		return gzopen($this->file_location, 'wb9');
@@ -50,6 +67,9 @@ class Shuttle_Dump_File_Gzip extends Shuttle_Dump_File {
 	}
 }
 
+/**
+ * MySQL insert statement builder. 
+ */
 class Shuttle_Insert_Statement {
 	private $rows = array();
 	private $length = 0;
@@ -58,15 +78,18 @@ class Shuttle_Insert_Statement {
 	function __construct($table) {
 		$this->table = $table;
 	}
+
 	function reset() {
 		$this->rows = array();
 		$this->length = 0;
 	}
+
 	function add_row($row) {
 		$row = '(' . implode(",", $row) . ')';
 		$this->rows[] = $row;
 		$this->length += strlen($row);
 	}
+
 	function get_sql() {
 		if (empty($this->rows)) {
 			return false;
@@ -75,23 +98,49 @@ class Shuttle_Insert_Statement {
 		return 'INSERT INTO `' . $this->table . '` VALUES ' . 
 			implode(",\n", $this->rows) . '; ';
 	}
+
 	function get_length() {
 		return $this->length;
 	}
 }
+
+/**
+ * Main facade
+ */
 abstract class Shuttle_Dumper {
 	/**
 	 * Maximum length of single insert statement
 	 */
 	const INSERT_THRESHOLD = 838860;
 	
+	/**
+	 * @var Shuttle_DBConn
+	 */	
 	public $db;
+
+	/**
+	 * @var Shuttle_Dump_File
+	 */
 	public $dump_file;
+
+	/**
+	 * End of line style used in the dump
+	 */
 	public $eol = "\r\n";
 
+	/**
+	 * Specificed tables to include
+	 */
 	public $include_tables;
+
+	/**
+	 * Specified tables to exclude
+	 */
 	public $exclude_tables = array();
 
+	/**
+	 * Factory method for dumper on current hosts's configuration. 
+	 */
 	static function create($db_options) {
 		$db = Shuttle_DBConn::create($db_options);
 
@@ -121,7 +170,11 @@ abstract class Shuttle_Dumper {
 	}
 
 	public static function has_shell_access() {
-		return is_callable('shell_exec') && stripos(ini_get('disable_functions'), 'shell_exec') === false;
+		if (!is_callable('shell_exec')) {
+			return false;
+		}
+		$disabled_functions = ini_get('disable_functions');
+		return stripos($disabled_functions, 'shell_exec') === false;
 	}
 
 	public static function is_shell_command_available($command) {
@@ -210,7 +263,8 @@ class Shuttle_Dumper_Native extends Shuttle_Dumper {
 		$this->dump_file = Shuttle_Dump_File::create($export_file_location);
 
 		$this->dump_file->write("-- Generation time: " . date('r') . $eol);
-		$this->dump_file->write("-- Host: " . $this->db->host . ", DB name: " . $this->db->name . $eol);
+		$this->dump_file->write("-- Host: " . $this->db->host . $eol);
+		$this->dump_file->write("-- DB name: " . $this->db->name . $eol);
 		$this->dump_file->write("/*!40030 SET NAMES UTF8 */;$eol$eol");
 
 		$tables = $this->get_tables($table_prefix);
