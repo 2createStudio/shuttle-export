@@ -179,14 +179,36 @@ abstract class Shuttle_Dumper {
 
 	public static function is_shell_command_available($command) {
 		if (preg_match('~win~i', PHP_OS)) {
-			$binary_locator = 'where';
+			/*
+			On Windows, the `where` command checks for availabilty in PATH. According
+			to the manual(`where /?`), there is quiet mode: 
+			....
+			    /Q       Returns only the exit code, without displaying the list
+			             of matched files. (Quiet mode)
+			....
+			*/
+			$output = array();
+			exec('where /Q ' . $command, $output, $return_val);
+
+			if (intval($return_val) === 1) {
+				return false;
+			} else {
+				return true;
+			}
+
 		} else {
-			$binary_locator = 'which';
+			$last_line = exec('which ' . $command);
+			$last_line = trim($last_line);
+
+			// Whenever there is at least one line in the output, 
+			// it should be the path to the executable
+			if (empty($last_line)) {
+				return false;
+			} else {
+				return true;
+			}
 		}
-
-		$binary_location = $binary_locator . ' ' . $command;
-
-		return !empty($binary_location);
+		
 	}
 
 	/**
