@@ -224,9 +224,11 @@ abstract class Shuttle_Dumper {
 		if (!empty($this->include_tables)) {
 			return $this->include_tables;
 		}
-
+		
+		// $tables will only include the tables and not views.
+		// TODO - Handle views also, edits to be made in function 'get_create_table_sql' line 336
 		$tables = $this->db->fetch_numeric('
-			SHOW TABLES LIKE "' . $this->db->escape_like($table_prefix) . '%"
+			SHOW FULL TABLES WHERE Table_Type = "BASE TABLE" AND Tables_in_'.$this->db->name.' LIKE "' . $this->db->escape_like($table_prefix) . '%"
 		');
 
 		$tables_list = array();
