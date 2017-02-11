@@ -287,12 +287,32 @@ class Shuttle_Dumper_Native extends Shuttle_Dumper {
 		$this->dump_file->write("-- Generation time: " . date('r') . $eol);
 		$this->dump_file->write("-- Host: " . $this->db->host . $eol);
 		$this->dump_file->write("-- DB name: " . $this->db->name . $eol);
-		$this->dump_file->write("/*!40030 SET NAMES UTF8 */;$eol$eol");
+		$this->dump_file->write("/*!40030 SET NAMES UTF8 */;$eol");
+		
+		$this->dump_file->write("/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;$eol");
+		$this->dump_file->write("/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;$eol");
+		$this->dump_file->write("/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;$eol");
+		$this->dump_file->write("/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;$eol");
+		$this->dump_file->write("/*!40103 SET TIME_ZONE='+00:00' */;$eol");
+		$this->dump_file->write("/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;$eol");
+		$this->dump_file->write("/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;$eol");
+		$this->dump_file->write("/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;$eol");
+		$this->dump_file->write("/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;$eol$eol");
+
 
 		$tables = $this->get_tables($table_prefix);
 		foreach ($tables as $table) {
 			$this->dump_table($table);
 		}
+		
+		$this->dump_file->write("$eol$eol");
+		$this->dump_file->write("/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;$eol");
+		$this->dump_file->write("/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;$eol");
+		$this->dump_file->write("/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;$eol");
+		$this->dump_file->write("/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;$eol");
+		$this->dump_file->write("/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;$eol");
+		$this->dump_file->write("/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;$eol");
+		$this->dump_file->write("/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;$eol$eol");
 
 		unset($this->dump_file);
 	}
