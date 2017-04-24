@@ -1,8 +1,8 @@
 <?php
-namespace ShuttleExport;
+namespace ShuttleExport\Dumper;
 use ShuttleExport\Dump_File\Dump_File;
 
-class Dumper_ShellCommand extends Dumper {
+class ShellCommand extends Dumper {
 	function dump($export_file_location, $table_prefix='') {
 		$command = 'mysqldump -h ' . escapeshellarg($this->db->host) .
 			' -u ' . escapeshellarg($this->db->username) . 

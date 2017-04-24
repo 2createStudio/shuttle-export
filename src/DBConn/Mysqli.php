@@ -1,12 +1,13 @@
 <?php
-namespace ShuttleExport;
+namespace ShuttleExport\DBConn;
+use ShuttleExport\Exception;
 
-class DBConn_Mysqli extends DBConn {
+class Mysqli extends DBConn {
 	function connect() {
 		$this->connection = new \MySQLi($this->host, $this->username, $this->password, $this->name);
 
 		if ($this->connection->connect_error) {
-			throw new Shuttle_Exception("Couldn't connect to the database: " . $this->connection->connect_error);
+			throw new Exception("Couldn't connect to the database: " . $this->connection->connect_error);
 		}
 
 		return true;
@@ -19,7 +20,7 @@ class DBConn_Mysqli extends DBConn {
 		$res = $this->connection->query($q);
 		
 		if (!$res) {
-			throw new Shuttle_Exception("SQL error: " . $this->connection->error);
+			throw new Exception("SQL error: " . $this->connection->error);
 		}
 		
 		return $res;

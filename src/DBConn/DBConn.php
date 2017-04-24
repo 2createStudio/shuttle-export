@@ -1,5 +1,5 @@
 <?php
-namespace ShuttleExport;
+namespace ShuttleExport\DBConn;
 
 class DBConn {
 	public $host;
@@ -21,9 +21,9 @@ class DBConn {
 
 	static function create($options) {
 		if (class_exists('mysqli')) {
-			$class_name = "ShuttleExport\\DBConn_Mysqli";
+			$class_name = "ShuttleExport\\DBConn\\Mysqli";
 		} else {
-			$class_name = "ShuttleExport\\DDBConn_Mysql";
+			$class_name = "ShuttleExport\\DDBConn\\Mysql";
 		}
 
 		return new $class_name($options);

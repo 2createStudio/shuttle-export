@@ -1,9 +1,9 @@
 <?php
-namespace ShuttleExport;
+namespace ShuttleExport\Dumper;
 
 use ShuttleExport\Dump_File\Dump_File;
 
-class Dumper_Native extends Dumper {
+class Native extends Dumper {
 	public function dump($export_file_location, $table_prefix='') {
 		$eol = $this->eol;
 

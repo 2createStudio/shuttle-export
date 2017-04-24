@@ -1,5 +1,8 @@
 <?php
-namespace ShuttleExport;
+namespace ShuttleExport\Dumper;
+use ShuttleExport\DBConn\DBConn;
+use ShuttleExport\Dumper\ShellCommand as ShellCommandDumper;
+use ShuttleExport\Dumper\Native as NativeDumper;
 
 /**
  * Main facade
@@ -47,9 +50,9 @@ abstract class Dumper {
 				&& self::is_shell_command_available('mysqldump')
 				&& self::is_shell_command_available('gzip')
 			) {
-			$dumper = new Dumper_ShellCommand($db);
+			$dumper = new ShellCommandDumper($db);
 		} else {
-			$dumper = new Dumper_Native($db);
+			$dumper = new NativeDumper($db);
 		}
 
 		if (isset($db_options['include_tables'])) {
@@ -129,7 +132,7 @@ abstract class Dumper {
 		// $tables will only include the tables and not views.
 		// TODO - Handle views also, edits to be made in function 'get_create_table_sql' line 336
 		$tables = $this->db->fetch_numeric('
-			SHOW FULL TABLES WHERE Table_Type = "BASE TABLE" AND Tables_in_'.$this->db->name.' LIKE "' . $this->db->escape_like($table_prefix) . '%"
+			SHOW FULL TABLES WHERE Table_Type = "BASE TABLE" AND Tables_in_' . $this->db->name . ' LIKE "' . $this->db->escape_like($table_prefix) . '%"
 		');
 
 		$tables_list = array();
