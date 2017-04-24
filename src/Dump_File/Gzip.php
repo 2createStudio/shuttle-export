@@ -1,10 +1,10 @@
 <?php
-namespace ShuttleExport;
+namespace ShuttleExport\Dump_File;
 
 /**
  * Gzip implementation. Uses gz* functions. 
  */
-class Dump_File_Gzip extends Dump_File {
+class Gzip extends Dump_File {
 	function open() {
 		return gzopen($this->file_location, 'wb9');
 	}

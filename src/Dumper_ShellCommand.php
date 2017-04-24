@@ -1,5 +1,6 @@
 <?php
 namespace ShuttleExport;
+use ShuttleExport\Dump_File\Dump_File;
 
 class Dumper_ShellCommand extends Dumper {
 	function dump($export_file_location, $table_prefix='') {

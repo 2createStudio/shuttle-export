@@ -1,5 +1,7 @@
 <?php
-namespace ShuttleExport;
+namespace ShuttleExport\Dump_File;
+
+use ShuttleExport\Exception;
 
 /**
  * Abstract dump file: provides common interface for writing
@@ -21,16 +23,16 @@ abstract class Dump_File {
 
 	static function create($filename) {
 		if (self::is_gzip($filename)) {
-			return new Dump_File_Gzip($filename);
+			return new Gzip($filename);
 		}
-		return new Dump_File_Plaintext($filename);
+		return new Plaintext($filename);
 	}
 	function __construct($file) {
 		$this->file_location = $file;
 		$this->fh = $this->open();
 
 		if (!$this->fh) {
-			throw new Exception("Couldn't create gz file");
+			throw new Exception("Couldn't create a dump file");
 		}
 	}
 
