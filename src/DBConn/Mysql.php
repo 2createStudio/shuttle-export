@@ -62,4 +62,8 @@ class Mysql extends DBConn {
 	function fetch_row($data) {
 		return mysql_fetch_assoc($data);
 	}
+
+	function set_charset($charset) {
+		return mysql_set_charset($charset);	
+	}
 }

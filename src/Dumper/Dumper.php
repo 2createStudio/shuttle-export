@@ -61,6 +61,11 @@ abstract class Dumper {
 		if (isset($db_options['exclude_tables'])) {
 			$dumper->exclude_tables = $db_options['exclude_tables'];
 		}
+		
+		$result = $db->set_charset('utf8mb4');
+		if (!$result) {
+			$db->set_charset('utf8');
+		}
 
 		return $dumper;
 	}
