@@ -57,7 +57,7 @@ class Mysqli extends DBConn {
 	}
 
 	function fetch_row($data) {
-		return $data->fetch_array(mysqli_assoc);
+		return $data->fetch_array(MYSQLI_ASSOC);
 	}
 
 	function set_charset($charset) {
