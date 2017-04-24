@@ -75,7 +75,11 @@ abstract class Dumper {
 	}
 
 	public static function is_shell_command_available($command) {
-		if ( preg_match('~win~i', PHP_OS) ) {
+		// OSx is providing darwin, but that contains "win" which is also used in Windows. This seems the simples check
+		// considering all possibilities `uname`
+		//  * https://github.com/php/php-src/blob/0d51ebd1a54af59d915c551a240b56bb3f0e26a6/configure.in#L1300 
+		//  * https://en.wikipedia.org/wiki/Uname
+		if ( preg_match('~win~i', PHP_OS) && !preg_match('~darwin~i', PHP_OS) ) {
 			/*
 			On Windows, the `where` command checks for availabilty in PATH. According
 			to the manual(`where /?`), there is quiet mode: 
