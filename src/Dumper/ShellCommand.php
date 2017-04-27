@@ -1,6 +1,7 @@
 <?php
 namespace ShuttleExport\Dumper;
 use ShuttleExport\Dump_File\Dump_File;
+use Symfony\Component\Process\Process;
 
 class ShellCommand extends Dumper {
 	function dump($export_file_location, $table_prefix='') {
@@ -18,24 +19,18 @@ class ShellCommand extends Dumper {
 			$command .= ' ' . implode(' ', array_map('escapeshellarg', $tables));
 		}
 
-		$error_file = tempnam(sys_get_temp_dir(), 'err');
-
-		$command .= ' 2> ' . escapeshellarg($error_file);
-
 		if (Dump_File::is_gzip($export_file_location)) {
 			$command .= ' | gzip';
 		}
 
 		$command .= ' > ' . escapeshellarg($export_file_location);
+		$process = new Process($command);
 
-		exec($command, $output, $return_val);
-
-		if ($return_val !== 0) {
-			$error_text = file_get_contents($error_file);
-			unlink($error_file);
-			throw new Exception('Couldn\'t export database: ' . $error_text);
+		$process->run();
+		if (!$process->isSuccessful()) {
+			$err = 'Couldn\'t export database: ' . $process->getErrorOutput();
+			throw new Exception($err);
 		}
-
-		unlink($error_file);
 	}
+
 }

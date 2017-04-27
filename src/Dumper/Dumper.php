@@ -8,25 +8,21 @@ use ShuttleExport\Dumper\Native as NativeDumper;
  * Main facade
  */
 abstract class Dumper {
-	/**
-	 * Maximum length of single insert statement
-	 */
-	const INSERT_THRESHOLD = 838860;
 	
 	/**
-	 * @var Shuttle_DBConn
+	 * @var \ShuttleExport\DBConn
 	 */	
 	public $db;
 
 	/**
-	 * @var Shuttle_Dump_File
+	 * @var \ShuttleExport\Dump_File\Dump_File
 	 */
 	public $dump_file;
 
 	/**
 	 * End of line style used in the dump
 	 */
-	public $eol = "\r\n";
+	public $eol = "\n";
 
 	/**
 	 * Specificed tables to include
@@ -38,86 +34,15 @@ abstract class Dumper {
 	 */
 	public $exclude_tables = array();
 
-	/**
-	 * Factory method for dumper on current hosts's configuration. 
-	 */
-	static function create($db_options) {
-		$db = DBConn::create($db_options);
-
-		$db->connect();
-
-		if (self::has_shell_access() 
-				&& self::is_shell_command_available('mysqldump')
-				&& self::is_shell_command_available('gzip')
-			) {
-			$dumper = new ShellCommandDumper($db);
-		} else {
-			$dumper = new NativeDumper($db);
-		}
+	function __construct($db_options) {
+		$this->db = DBConn::create($db_options);
 
 		if (isset($db_options['include_tables'])) {
-			$dumper->include_tables = $db_options['include_tables'];
+			$this->include_tables = $db_options['include_tables'];
 		}
 		if (isset($db_options['exclude_tables'])) {
-			$dumper->exclude_tables = $db_options['exclude_tables'];
+			$this->exclude_tables = $db_options['exclude_tables'];
 		}
-		
-		$result = $db->set_charset('utf8mb4');
-		if (!$result) {
-			$db->set_charset('utf8');
-		}
-
-		return $dumper;
-	}
-
-	function __construct(DBConn $db) {
-		$this->db = $db;
-	}
-
-	public static function has_shell_access() {
-		if (!is_callable('shell_exec')) {
-			return false;
-		}
-		$disabled_functions = ini_get('disable_functions');
-		return stripos($disabled_functions, 'shell_exec') === false;
-	}
-
-	public static function is_shell_command_available($command) {
-		// OSx is providing darwin, but that contains "win" which is also used in Windows. This seems the simples check
-		// considering all possibilities `uname`
-		//  * https://github.com/php/php-src/blob/0d51ebd1a54af59d915c551a240b56bb3f0e26a6/configure.in#L1300 
-		//  * https://en.wikipedia.org/wiki/Uname
-		if ( preg_match('~win~i', PHP_OS) && !preg_match('~darwin~i', PHP_OS) ) {
-			/*
-			On Windows, the `where` command checks for availabilty in PATH. According
-			to the manual(`where /?`), there is quiet mode: 
-			....
-			    /Q       Returns only the exit code, without displaying the list
-			             of matched files. (Quiet mode)
-			....
-			*/
-			$output = array();
-			exec('where /Q ' . $command, $output, $return_val);
-
-			if (intval($return_val) === 1) {
-				return false;
-			} else {
-				return true;
-			}
-
-		} else {
-			$last_line = exec('which ' . $command);
-			$last_line = trim($last_line);
-
-			// Whenever there is at least one line in the output, 
-			// it should be the path to the executable
-			if (empty($last_line)) {
-				return false;
-			} else {
-				return true;
-			}
-		}
-		
 	}
 
 	/**
@@ -136,8 +61,11 @@ abstract class Dumper {
 		
 		// $tables will only include the tables and not views.
 		// TODO - Handle views also, edits to be made in function 'get_create_table_sql' line 336
+		$escaped_prefix = $this->db->escape_like($table_prefix);
 		$tables = $this->db->fetch_numeric('
-			SHOW FULL TABLES WHERE Table_Type = "BASE TABLE" AND Tables_in_' . $this->db->name . ' LIKE "' . $this->db->escape_like($table_prefix) . '%"
+			SHOW FULL TABLES
+			WHERE Table_Type = "BASE TABLE"
+			AND Tables_in_' . $this->db->name . ' LIKE "' . $escaped_prefix . '%"
 		');
 
 		$tables_list = array();

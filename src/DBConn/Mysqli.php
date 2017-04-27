@@ -10,6 +10,8 @@ class Mysqli extends DBConn {
 			throw new Exception("Couldn't connect to the database: " . $this->connection->connect_error);
 		}
 
+		$this->setup_charset();
+
 		return true;
 	}
 
@@ -62,6 +64,10 @@ class Mysqli extends DBConn {
 
 	function set_charset($charset) {
 		return $this->connection->set_charset($charset);
+	}
+
+	function server_version() {
+		return $this->connection->server_info;
 	}
 
 }

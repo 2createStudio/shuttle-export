@@ -2,9 +2,12 @@
 namespace ShuttleExport\Dumper;
 
 use ShuttleExport\Dump_File\Dump_File;
+use ShuttleExport\Insert_Statement;
 
 class Native extends Dumper {
 	public function dump($export_file_location, $table_prefix='') {
+		$this->db->connect();
+
 		$eol = $this->eol;
 
 		$this->dump_file = Dump_File::create($export_file_location);
@@ -52,7 +55,7 @@ class Native extends Dumper {
 
 		$data = $this->db->query("SELECT * FROM `$table`");
 
-		$insert = new Shuttle_Insert_Statement($table);
+		$insert = new Insert_Statement($table);
 
 		while ($row = $this->db->fetch_row($data)) {
 			$row_values = array();
@@ -61,7 +64,7 @@ class Native extends Dumper {
 			}
 			$insert->add_row( $row_values );
 
-			if ($insert->get_length() > self::INSERT_THRESHOLD) {
+			if ($insert->get_length() > Insert_Statement::LENGTH_THRESHOLD) {
 				// The insert got too big: write the SQL and create
 				// new insert statement
 				$this->dump_file->write($insert->get_sql() . $eol);

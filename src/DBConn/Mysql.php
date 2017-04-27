@@ -15,6 +15,8 @@ class Mysql extends DBConn {
 			throw new Exception("Couldn't select database: " . mysql_error($this->connection));
 		}
 
+		$this->setup_charset();
+
 		return true;
 	}
 
@@ -66,4 +68,9 @@ class Mysql extends DBConn {
 	function set_charset($charset) {
 		return mysql_set_charset($charset);	
 	}
+
+	function server_version() {
+		return mysql_get_server_info($this->connection);
+	}
+
 }

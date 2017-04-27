@@ -1,5 +1,23 @@
 {
+	"name": "2createStudio/ShuttleExport",
+    "type": "library",
+    "description": "MySQL export library",
+    "keywords": [],
+    "homepage": "https://github.com/2createStudio/shuttle-export",
+    "license": "GPLv2",
+    "authors": [
+        {
+            "name": "Emil Mohamed",
+            "email": "emil@2c-studio.com"
+        }
+    ],
+
     "autoload": {
         "psr-4": {"ShuttleExport\\": "src/"}
+    },
+
+    "require": {
+        "php": ">=5.3.2",
+        "symfony/process": "v2.0.25"
     }
 }
