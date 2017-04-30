@@ -5,7 +5,7 @@ use ShuttleExport\Exception;
 
 class Mysql extends DBConn {
 	function connect() {
-		$this->connection = mysql_connect($this->host, $this->username, $this->password);
+		$this->connection = mysql_connect($this->host . ':' . $this->port, $this->username, $this->password);
 		if (!$this->connection) {
 			throw new Exception("Couldn't connect to the database: " . mysql_error());
 		}
@@ -15,7 +15,10 @@ class Mysql extends DBConn {
 			throw new Exception("Couldn't select database: " . mysql_error($this->connection));
 		}
 
-		$this->setup_charset();
+		$res = mysql_set_charset($this->charset, $this->connection);
+		if (!$res) {
+			throw new Exception("Couldn't set charset: " . mysql_error($this->connection));
+		}
 
 		return true;
 	}
@@ -63,10 +66,6 @@ class Mysql extends DBConn {
 
 	function fetch_row($data) {
 		return mysql_fetch_assoc($data);
-	}
-
-	function set_charset($charset) {
-		return mysql_set_charset($charset);	
 	}
 
 	function server_version() {

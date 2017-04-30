@@ -1,22 +1,22 @@
 <?php 
-use ShuttleExport\Dumper\Factory as DumperFactory;
-use ShuttleExport\Exception as ShuttleException;
-
 include (__DIR__ . '/vendor/autoload.php');
 
-try {
-	$dumper = DumperFactory::make_dumper(array(
-		'host' => '',
-		'username' => 'root',
-		'password' => 'kuku',
-		'db_name' => 'bourgaswp',
-	));
-	
-	// dump the database to gzipped file
-	$dumper->dump('world.sql.gz');
+use ShuttleExport\Exporter;
+use ShuttleExport\Exception as ShuttleException;
 
-	// dump the database to plain text file
-	$dumper->dump('world.sql');
+try {
+	Exporter::export(array(
+		'db_host'        => '',
+		'db_user'        => 'root',
+		'db_password'    => 'kuku',
+		'db_name'        => 'bourgaswp',
+		'db_port'        => 3306,
+		'prefix'         => 'wp_',
+		'only_tables'    => ['wp_posts', 'wp_postmeta'],
+		'exclude_tables' => ['wp_posts', 'wp_postmeta'],
+		'charset'        => 'utf8mb4',
+		'export_file'    => __DIR__ . '/dumps/' . date('Y_m_d_H_i_s') . '.sql.gz',
+	));
 
 	#$wp_dumper = Shuttle_Dumper::create(array(
 		#'host' => '',

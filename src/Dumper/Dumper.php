@@ -1,14 +1,9 @@
 <?php
 namespace ShuttleExport\Dumper;
 use ShuttleExport\DBConn\DBConn;
-use ShuttleExport\Dumper\ShellCommand as ShellCommandDumper;
-use ShuttleExport\Dumper\Native as NativeDumper;
+use ShuttleExport\Exception;
 
-/**
- * Main facade
- */
 abstract class Dumper {
-	
 	/**
 	 * @var \ShuttleExport\DBConn
 	 */	
@@ -20,14 +15,9 @@ abstract class Dumper {
 	public $dump_file;
 
 	/**
-	 * End of line style used in the dump
-	 */
-	public $eol = "\n";
-
-	/**
 	 * Specificed tables to include
 	 */
-	public $include_tables;
+	public $only_tables;
 
 	/**
 	 * Specified tables to exclude
@@ -35,14 +25,53 @@ abstract class Dumper {
 	public $exclude_tables = array();
 
 	function __construct($db_options) {
+		$db_options = $this->validate_options($db_options);
+
 		$this->db = DBConn::create($db_options);
 
-		if (isset($db_options['include_tables'])) {
-			$this->include_tables = $db_options['include_tables'];
+		$this->export_file = $db_options['export_file'];
+		$this->only_tables = $db_options['only_tables'];
+		$this->exclude_tables = $db_options['exclude_tables'];
+	}
+
+	private function validate_options($db_options) {
+		$options = [
+			'db_host'        => [ 'required' => false, 'default' => '127.0.0.1' ],
+			'db_port'        => [ 'required' => false, 'default' => 3306        ],
+			'db_user'        => [ 'required' => false, 'default' => 'root'      ],
+			'db_password'    => [ 'required' => false, 'default' => ''          ],
+			'db_name'        => [ 'required' => true                            ],
+			'export_file'    => [ 'required' => true                            ],
+			'prefix'         => [ 'required' => false, 'default' => null        ],
+			'only_tables'    => [ 'required' => false, 'default' => null        ],
+			'exclude_tables' => [ 'required' => false, 'default' => null        ],
+			'charset'        => [ 'required' => false, 'default' => 'utf8'      ],
+		];
+
+		$errors = [];
+		foreach ($options as $option_name => $option_props) {
+			$is_required = $option_props['required'];
+			$is_present = !empty($db_options[$option_name]);
+
+			// Make sure that required options are present
+			if ($is_required && !$is_present) {
+				throw new Exception("Missing required option: $option_name");
+			}
+
+			// Add default values for non-present options
+			if (!$is_present) {
+				$db_options[$option_name] = $option_props['default'];
+			}
 		}
-		if (isset($db_options['exclude_tables'])) {
-			$this->exclude_tables = $db_options['exclude_tables'];
+
+		$unknown_options = array_diff_key($db_options, $options);
+		if (!empty($unknown_options)) {
+			throw new Exception( "Unknown options: " . $unknown_option);
 		}
+
+		$dir = dirname($db_options['export_file']);
+
+		return $db_options;
 	}
 
 	/**
@@ -52,16 +81,16 @@ abstract class Dumper {
 	 * @param string $table_prefix Allow to export only tables with particular prefix
 	 * @return void
 	 */
-	abstract public function dump($export_file_location, $table_prefix='');
+	abstract public function dump();
 
-	protected function get_tables($table_prefix) {
-		if (!empty($this->include_tables)) {
-			return $this->include_tables;
+	protected function get_tables() {
+		if (!empty($this->only_tables)) {
+			return $this->only_tables;
 		}
 		
 		// $tables will only include the tables and not views.
 		// TODO - Handle views also, edits to be made in function 'get_create_table_sql' line 336
-		$escaped_prefix = $this->db->escape_like($table_prefix);
+		$escaped_prefix = $this->db->escape_like($this->db->prefix);
 		$tables = $this->db->fetch_numeric('
 			SHOW FULL TABLES
 			WHERE Table_Type = "BASE TABLE"

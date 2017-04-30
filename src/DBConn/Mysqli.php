@@ -4,14 +4,17 @@ use ShuttleExport\Exception;
 
 class Mysqli extends DBConn {
 	function connect() {
-		$this->connection = new \MySQLi($this->host, $this->username, $this->password, $this->name);
+		$this->connection = new \MySQLi($this->host, $this->username, $this->password, $this->name, $this->port);
 
 		if ($this->connection->connect_error) {
 			throw new Exception("Couldn't connect to the database: " . $this->connection->connect_error);
 		}
 
-		$this->setup_charset();
-
+		$res = $this->connection->set_charset($this->charset);
+		if (!$res) {
+			throw new Exception("Couldn't set charset: " . $this->connection->error);
+		}
+		
 		return true;
 	}
 
@@ -62,9 +65,6 @@ class Mysqli extends DBConn {
 		return $data->fetch_array(MYSQLI_ASSOC);
 	}
 
-	function set_charset($charset) {
-		return $this->connection->set_charset($charset);
-	}
 
 	function server_version() {
 		return $this->connection->server_info;

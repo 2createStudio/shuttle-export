@@ -4,7 +4,7 @@ use Symfony\Component\Process\Process;
 use Symfony\Component\Process\ExecutableFinder;
 
 /**
- * Shell abstraction
+ * Shell abstraction; It's just a handy proxy for Symfony Process component. 
  */
 class Shell {
 	function __construct() {
@@ -12,6 +12,7 @@ class Shell {
 	}
 
 	function is_enabled() {
+		return false;
 		if (!function_exists('proc_open')) {
 			return false;
 		}

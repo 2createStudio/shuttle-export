@@ -3,11 +3,6 @@ namespace ShuttleExport\Dumper;
 use ShuttleExport\Shell;
 
 class Factory {
-	public static function make_dumper($db_options) {
-		$factory = new self();
-		return $factory->make($db_options);
-	}
-
 	function __construct() {
 		$this->shell = new Shell();
 	}
@@ -17,9 +12,9 @@ class Factory {
 			$this->shell->has_command('mysqldump') &&
 			$this->shell->has_command('gzip')
 			) {
-			$class_name = 'ShuttleExport\\Dumper\\Native';
+			$class_name = 'ShuttleExport\\Dumper\\MysqldumpShellCommand';
 		} else {
-			$class_name = 'ShuttleExport\\Dumper\\Shell';
+			$class_name = 'ShuttleExport\\Dumper\\Php';
 		}
 		return new $class_name($db_options);
 	}

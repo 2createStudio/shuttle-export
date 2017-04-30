@@ -9,6 +9,7 @@ class Insert_Statement {
 	 * Maximum length of single insert statement. This "magic" number
 	 * has been taken from phpMiniAdmin: 
 	 * https://github.com/osalabs/phpminiadmin/blob/2b394346961c6545080a07151f97e858ac432c1a/phpminiadmin.php#L861
+	 * Not sure how it was chosen, but it works. 
 	 */
 	const LENGTH_THRESHOLD = 838860;
 
