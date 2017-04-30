@@ -5,6 +5,14 @@ use Symfony\Component\Process\Process;
 use ShuttleExport\Exception;
 
 class MysqldumpShellCommand extends Dumper {
+
+	public $process;
+
+	function init() {
+		// Save a reference to the Process object so it can be mocked in tests
+		$this->process = new Process('');
+		parent::init();
+	}
 	function dump() {
 		$command = 'mysqldump -h ' . escapeshellarg($this->db->host) .
 			' --port=' . escapeshellarg($this->db->port) . 
@@ -14,7 +22,7 @@ class MysqldumpShellCommand extends Dumper {
 			' ' . escapeshellarg($this->db->name);
 
 		$include_all_tables = empty($this->db->prefix) &&
-			empty($this->include_tables) &&
+			empty($this->only_tables) &&
 			empty($this->exclude_tables);
 
 		if (!$include_all_tables) {
@@ -27,11 +35,11 @@ class MysqldumpShellCommand extends Dumper {
 		}
 
 		$command .= ' > ' . escapeshellarg($this->export_file);
-		$process = new Process($command);
+		$this->process->setCommand($command);
 
-		$process->run();
-		if (!$process->isSuccessful()) {
-			throw new Exception($process->getErrorOutput());
+		$this->process->run();
+		if (!$this->process->isSuccessful()) {
+			throw new Exception($this->process->getErrorOutput());
 		}
 
 		return true;

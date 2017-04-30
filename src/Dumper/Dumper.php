@@ -32,6 +32,15 @@ abstract class Dumper {
 		$this->export_file = $db_options['export_file'];
 		$this->only_tables = $db_options['only_tables'];
 		$this->exclude_tables = $db_options['exclude_tables'];
+
+		$this->init();
+	}
+
+	/**
+	 * This function could be implemented in extended classes
+	 */
+	function init() {
+		// pass
 	}
 
 	private function validate_options($db_options) {
@@ -66,7 +75,7 @@ abstract class Dumper {
 
 		$unknown_options = array_diff_key($db_options, $options);
 		if (!empty($unknown_options)) {
-			throw new Exception( "Unknown options: " . $unknown_option);
+			throw new Exception( "Unknown options: " . implode(', ', $unknown_options));
 		}
 
 		$dir = dirname($db_options['export_file']);

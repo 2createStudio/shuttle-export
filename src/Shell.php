@@ -12,7 +12,6 @@ class Shell {
 	}
 
 	function is_enabled() {
-		return false;
 		if (!function_exists('proc_open')) {
 			return false;
 		}
@@ -24,10 +23,10 @@ class Shell {
 		return $this->executable_finder->find($command) !== null;
 	}
 
-	function run($command, $progress_callback=null) {
-		$process = new Process($command);
-		$process->run($progress_callback);
-		return $process->isSuccessful();
-	}
+	// function run($command, $progress_callback=null) {
+	// 	$process = new Process($command);
+	// 	$process->run($progress_callback);
+	// 	return $process->isSuccessful();
+	// }
 }
 
