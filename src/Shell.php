@@ -22,11 +22,5 @@ class Shell {
 	function has_command($command) {
 		return $this->executable_finder->find($command) !== null;
 	}
-
-	// function run($command, $progress_callback=null) {
-	// 	$process = new Process($command);
-	// 	$process->run($progress_callback);
-	// 	return $process->isSuccessful();
-	// }
 }
 
