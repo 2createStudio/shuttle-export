@@ -54,9 +54,6 @@ class Mysql extends DBConn {
 		return "'" . mysql_real_escape_string($value) . "'";
 	}
 
-	function escape_like($search) {
-		return str_replace(array('_', '%'), array('\_', '\%'), $search);
-	}
 
 	function get_var($sql) {
 		$result = $this->query($sql);

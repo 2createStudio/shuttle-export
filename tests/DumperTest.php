@@ -4,6 +4,7 @@ use Mockery as m;
 use ShuttleExport\Dumper\Factory as DumperFactory;
 use ShuttleExport\Dumper\Php as PhpDumper;
 use ShuttleExport\Dumper\MysqldumpShellCommand as MysqldumpDumper;
+use ShuttleExport\DBConn\Mysqli as MysqliDbConn;
 
 use ShuttleExport\Exception as ShuttleException;
 
@@ -91,28 +92,55 @@ class DumperTest extends TestCase {
 	/**
 	 * @test
 	 */
-	function it_passes_table_list_to_mysqldump_when_specific_tables_are_provided() {
-		$mysqldump_dumper = new MysqldumpDumper([
+	function it_fetches_tables_with_prefix() {
+		$factory = new DumperFactory();
+		$dumper = $factory->make([
 			'db_name' => 'test',
 			'export_file' => '/dev/null',
-			'only_tables' => ['table1', 'table2'],
-		]);
-		$mocked_process = m::mock('Symfony\Component\Process\Process');
-		$mocked_process->shouldReceive([
-			'run' => true,
-			'isSuccessful' => true,
 		]);
 
-		$mocked_process->shouldReceive('setCommand')->withArgs(function ($mysqldump_cmd) {
-			return preg_match('/"table1"/', $mysqldump_cmd) &&
-				preg_match('/"table2"/', $mysqldump_cmd);
-		});
-		$mysqldump_dumper->process = $mocked_process;
-		$mysqldump_dumper->dump();
-		$this->assertTrue(true);
+		$db = m::mock(MysqliDbConn::class)->makePartial();
+		$db->prefix = '_some_prefix';
+		$db
+			->shouldReceive('fetch_numeric')
+			->with(\Mockery::pattern('~\\\\_some\\\\_prefix%~'))
+			->andReturn([ ['_some_prefix_table_1'], ['_some_prefix_table_2']]);
+		$dumper->db = $db;
+
+		// See http://stackoverflow.com/a/28189403/514458 for 
+		// info on $canonicalize = true
+		$this->assertEquals(
+			['_some_prefix_table_1', '_some_prefix_table_2'],
+			$dumper->get_tables(),
+			"\$canonicalize = true"
+		);
 	}
 
 	
+	/**
+	 * @test
+	 */
+	function it_excludes_tables() {
+		$factory = new DumperFactory();
+		$dumper = $factory->make([
+			'db_name' => 'test',
+			'export_file' => '/dev/null',
+			'exclude_tables' => ['table2']
+		]);
+
+		$db = m::mock(MysqliDbConn::class)->makePartial();
+		$db
+			->shouldReceive([
+				'fetch_numeric' => [ ['table1'], ['table2'], ['table3'] ]
+			]);
+		$dumper->db = $db;
+
+		$this->assertEquals(
+			['table1', 'table3'],
+			$dumper->get_tables(),
+			"\$canonicalize = true"
+		);
+	}
 
 	
 

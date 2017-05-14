@@ -53,7 +53,7 @@ abstract class Dumper {
 			'export_file'    => [ 'required' => true                            ],
 			'prefix'         => [ 'required' => false, 'default' => null        ],
 			'only_tables'    => [ 'required' => false, 'default' => null        ],
-			'exclude_tables' => [ 'required' => false, 'default' => null        ],
+			'exclude_tables' => [ 'required' => false, 'default' => []          ],
 			'charset'        => [ 'required' => false, 'default' => 'utf8'      ],
 		];
 
@@ -92,11 +92,10 @@ abstract class Dumper {
 	 */
 	abstract public function dump();
 
-	protected function get_tables() {
+	public function get_tables() {
 		if (!empty($this->only_tables)) {
 			return $this->only_tables;
 		}
-		
 		// $tables will only include the tables and not views.
 		// TODO - Handle views also, edits to be made in function 'get_create_table_sql' line 336
 		$escaped_prefix = $this->db->escape_like($this->db->prefix);

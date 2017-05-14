@@ -2,12 +2,13 @@
 namespace ShuttleExport\DBConn;
 use ShuttleExport\Exception;
 
-class DBConn {
+abstract class DBConn {
 	public $host;
 	public $username;
 	public $password;
 	public $name;
 	public $port;
+	public $prefix;
 
 	public $charset;
 
@@ -33,5 +34,22 @@ class DBConn {
 		}
 
 		return new $class_name($options);
+	}
+
+	abstract function connect();
+	abstract function query($query);
+	abstract function fetch_numeric($query);
+	abstract function fetch($query, $result_type='');
+	abstract function escape($value);
+	abstract function get_var($sql);
+	abstract function fetch_row($data);
+	abstract function server_version();
+
+	public function escape_like($search) {
+		return str_replace(
+			array('_', '%'),
+			array('\\_', '\\%'),
+			$search
+		);
 	}
 }

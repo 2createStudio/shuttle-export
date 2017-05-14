@@ -51,10 +51,6 @@ class Mysqli extends DBConn {
 		return "'" . $this->connection->real_escape_string($value) . "'";
 	}
 
-	function escape_like($search) {
-		return str_replace(array('_', '%'), array('\_', '\%'), $search);
-	}
-
 	function get_var($sql) {
 		$result = $this->query($sql);
 		$row = $result->fetch_array($result, MYSQLI_NUM);
