@@ -8,6 +8,7 @@ use ShuttleExport\DBConn\Mysqli as MysqliDbConn;
 use ShuttleExport\Dump_File\Dump_File as Dump_File;
 
 use ShuttleExport\Exception as ShuttleException;
+use Symfony\Component\Process\Process;
 
 class DumperTest extends TestCase {
 	function tearDown() {
@@ -171,5 +172,78 @@ class DumperTest extends TestCase {
 		$this->assertFalse(Dump_File::is_gzip('/tmp/dump.sql'));
 
 		$this->assertFalse(Dump_File::is_gzip('/tmp/dump.sql.gz/whatever/dump.sql'));
+	}
+
+	/**
+	 * @test
+	 */
+	function it_passes_correct_args_to_mysqldump() {
+		$factory = new DumperFactory();
+		$dumper = $factory->make([
+			'db_name' => 'test',
+			'only_tables' => ['table_1'],
+			'export_file' => '/tmp/test.sql.gz',
+			'charset' => 'utf8mb4',
+		]);
+
+		$shell = m::mock('\ShuttleExport\Shell');
+		$shell->shouldReceive([
+			'is_enabled' => true,
+			'has_command' => true,
+		]);
+		$process = m::mock(Process::class)->makePartial();
+
+		$process
+			->shouldReceive('setCommandLine')
+			->with(\Mockery::on(function ($cmd) {
+				if (!preg_match('~--set-charset=.utf8mb4.~', $cmd)) {
+					return false;
+				}
+				if (!preg_match('~\|\s*gzip\s*[>|]~', $cmd)) {
+					return false;
+				}
+
+				if (!preg_match('~table_1~', $cmd)) {
+					return false;
+				}
+
+				return true;
+			}));
+
+		$dumper->shell = $shell;
+		$dumper->process = $process;
+		$dumper->dump();
+
+		$this->assertTrue(true);
+
+	}
+	/**
+	 * @test
+	 * @expectedException \ShuttleExport\Exception
+	 */
+	function it_throws_own_exception_on_process_error() {
+		$factory = new DumperFactory();
+		$dumper = $factory->make([
+			'db_name' => 'test',
+			'export_file' => '/tmp/test.sql.gz',
+		]);
+
+		$shell = m::mock('\ShuttleExport\Shell');
+		$shell->shouldReceive([
+			'is_enabled' => true,
+			'has_command' => true,
+		]);
+		$process = m::mock(Process::class)->makePartial();
+
+		$process
+			->shouldReceive('run')
+			->andThrow(\RuntimeException::class, 'Unable to launch a new process.');
+
+		$dumper->shell = $shell;
+		$dumper->process = $process;
+		$dumper->dump();
+
+		$this->assertTrue(true);
+
 	}
 }

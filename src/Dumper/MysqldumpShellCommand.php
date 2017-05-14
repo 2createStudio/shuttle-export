@@ -35,9 +35,15 @@ class MysqldumpShellCommand extends Dumper {
 		}
 
 		$command .= ' > ' . escapeshellarg($this->export_file);
-		$this->process->setCommand($command);
+		$this->process->setCommandLine($command);
 
-		$this->process->run();
+		// Translate the exception to \ShuttleExport\Exception
+		try {
+			$this->process->run();
+		} catch(\RuntimeException $e) {
+			throw new Exception($e->getMessage());
+		}
+
 		if (!$this->process->isSuccessful()) {
 			throw new Exception($this->process->getErrorOutput());
 		}
