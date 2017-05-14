@@ -37,7 +37,7 @@ abstract class Dump_File {
 	}
 
 	public static function is_gzip($filename) {
-		return preg_match('~gz$~i', $filename);
+		return (bool) preg_match('~\.gz$~i', $filename);
 	}	
 }
 

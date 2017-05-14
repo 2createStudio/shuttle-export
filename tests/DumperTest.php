@@ -5,6 +5,7 @@ use ShuttleExport\Dumper\Factory as DumperFactory;
 use ShuttleExport\Dumper\Php as PhpDumper;
 use ShuttleExport\Dumper\MysqldumpShellCommand as MysqldumpDumper;
 use ShuttleExport\DBConn\Mysqli as MysqliDbConn;
+use ShuttleExport\Dump_File\Dump_File as Dump_File;
 
 use ShuttleExport\Exception as ShuttleException;
 
@@ -143,5 +144,32 @@ class DumperTest extends TestCase {
 	}
 
 	
+	/**
+	 * @test
+	 */
+	function it_respects_only_tables_option() {
+		$factory = new DumperFactory();
+		$dumper = $factory->make([
+			'db_name' => 'test',
+			'export_file' => '/dev/null',
+			'only_tables' => ['table1', 'table2']
+		]);
 
+		$this->assertEquals(
+			['table1', 'table2'],
+			$dumper->get_tables(),
+			"\$canonicalize = true"
+		);
+	}
+
+	/**
+	 * @test
+	 */
+	function it_uses_gzip_when_necessary() {
+		$this->assertTrue(Dump_File::is_gzip('/tmp/dump.sql.gz'));
+		$this->assertTrue(Dump_File::is_gzip('/tmp/dump.SQL.GZ'));
+		$this->assertFalse(Dump_File::is_gzip('/tmp/dump.sql'));
+
+		$this->assertFalse(Dump_File::is_gzip('/tmp/dump.sql.gz/whatever/dump.sql'));
+	}
 }
