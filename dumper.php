@@ -399,6 +399,11 @@ class Shuttle_DBConn_Mysql extends Shuttle_DBConn {
 		if (!$select_db_res) {
 			throw new Shuttle_Exception("Couldn't select database: " . mysql_error($this->connection));
 		}
+		
+		/*
+		// if data with emoji
+		mysql_query("set names utf8mb4");
+		*/
 
 		return true;
 	}
@@ -457,6 +462,10 @@ class Shuttle_DBConn_Mysqli extends Shuttle_DBConn {
 		if ($this->connection->connect_error) {
 			throw new Shuttle_Exception("Couldn't connect to the database: " . $this->connection->connect_error);
 		}
+		/*
+		// if data with emoji
+		$this->connection->query("set names utf8mb4");
+		*/
 
 		return true;
 	}
