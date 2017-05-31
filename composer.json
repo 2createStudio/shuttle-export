@@ -1,0 +1,13 @@
+{
+    "name": "tocreatestudio/shuttle-export",
+    "description": "MySQL Database Backup or Dump utility in PHP",
+    "type": "library",
+    "license": "MIT",
+    "minimum-stability": "stable",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "ToCreateStudio\\ShuttleExport\\": "src"
+        }
+    }
+}
