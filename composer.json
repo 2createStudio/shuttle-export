@@ -1,5 +1,5 @@
 {
-    "name": "ToCreateStudio/shuttle-export",
+    "name": "tocreatestudio/shuttle-export",
     "description": "MySQL Database Backup or Dump utility in PHP",
     "type": "library",
     "license": "MIT",
