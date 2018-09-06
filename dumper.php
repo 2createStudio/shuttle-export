@@ -364,6 +364,7 @@ class Shuttle_DBConn {
 	public $username;
 	public $password;
 	public $name;
+	public $port;
 
 	protected $connection;
 
@@ -375,6 +376,7 @@ class Shuttle_DBConn {
 		$this->username = $options['username'];
 		$this->password = $options['password'];
 		$this->name = $options['db_name'];
+		$this->port = $options['db_port'];
 	}
 
 	static function create($options) {
@@ -390,7 +392,7 @@ class Shuttle_DBConn {
 
 class Shuttle_DBConn_Mysql extends Shuttle_DBConn {
 	function connect() {
-		$this->connection = @mysql_connect($this->host, $this->username, $this->password);
+		$this->connection = @mysql_connect($this->host . ":" . $this->port, $this->username, $this->password);
 		if (!$this->connection) {
 			throw new Shuttle_Exception("Couldn't connect to the database: " . mysql_error());
 		}
@@ -452,7 +454,7 @@ class Shuttle_DBConn_Mysql extends Shuttle_DBConn {
 
 class Shuttle_DBConn_Mysqli extends Shuttle_DBConn {
 	function connect() {
-		$this->connection = @new MySQLi($this->host, $this->username, $this->password, $this->name);
+		$this->connection = @new MySQLi($this->host, $this->username, $this->password, $this->name, $this->port);
 
 		if ($this->connection->connect_error) {
 			throw new Shuttle_Exception("Couldn't connect to the database: " . $this->connection->connect_error);
