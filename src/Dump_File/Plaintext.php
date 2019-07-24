@@ -9,6 +9,7 @@ class Plaintext extends Dump_File {
 		return fopen($this->file_location, 'w');
 	}
 	function write($string) {
+		$string="\xEF\xBB\xBF".$string;
 		return fwrite($this->fh, $string);
 	}
 	function end() {
